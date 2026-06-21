@@ -13,7 +13,7 @@ import {
    and the AI live in the Flask backend (see trace-backend/).
    ────────────────────────────────────────────────────────────────────────── */
 
-const API = "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const api = {
   cases: (tab, page, pageSize = 12, band = "all") =>
