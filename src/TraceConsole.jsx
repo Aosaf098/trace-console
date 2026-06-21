@@ -300,9 +300,9 @@ function CaseRow({ c, index, tab, active, onClick }) {
 
 function CaseDetail({ c, tab, busy, onDecide, onDiscard }) {
   const b = T.bands[c.band] || T.bands.low;
-  const flagged = new Set(c.evidence.flatMap((e) => e.lines));
+  const flagged = new Set(c.evidence.map((e) => e.line).filter((l) => l !== null && l !== undefined));
   const lineSignal = {};
-  c.evidence.forEach((e) => e.lines.forEach((i) => { (lineSignal[i] ||= []).push(e.signal); }));
+  c.evidence.forEach((e) => { if (e.line !== null && e.line !== undefined) (lineSignal[e.line] ||= []).push(e.signal); });
 
   return (
     <div>
@@ -330,21 +330,23 @@ function CaseDetail({ c, tab, busy, onDecide, onDiscard }) {
       {/* why this ranking */}
       <section style={{ background: T.surface, border: `1px solid ${T.hair}`, borderRadius: 10, padding: "14px 16px", margin: "18px 0" }}>
         <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", color: T.faint, marginBottom: 12 }}>
-          Why this ranking · learned signal weights
+          Why this ranking · semantic signal match
         </div>
         {c.evidence.length === 0 ? (
           <div style={{ fontSize: 13.5, color: T.muted }}>No risk signals detected. Cleared to low — but still listed for a human pass.</div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {c.evidence.map((e) => (
               <div key={e.key} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{ width: 132, flexShrink: 0 }}>
+                <div style={{ width: 150, flexShrink: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{e.signal}</div>
                   <div style={{ fontFamily: T.mono, fontSize: 11, color: T.faint }}>
-                    weight +{Number(e.weight).toFixed(1)} · line{e.lines.length > 1 ? "s" : ""} {e.lines.map((i) => i + 1).join(", ")}
+                    match {Math.round(e.similarity * 100)}% · weight +{Number(e.weight).toFixed(1)} · line {e.line + 1}
                   </div>
                 </div>
-                <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>{e.note}</div>
+                <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
+                  <span style={{ color: T.ink }}>“{e.matched}”</span> — {e.note}
+                </div>
               </div>
             ))}
           </div>
