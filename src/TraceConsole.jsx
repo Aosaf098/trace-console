@@ -16,8 +16,8 @@ import {
 const API = "http://localhost:8000";
 
 const api = {
-  cases: (tab, page, pageSize = 12) =>
-    fetch(`${API}/api/cases?tab=${tab}&page=${page}&page_size=${pageSize}`).then((r) => r.json()),
+  cases: (tab, page, pageSize = 12, band = "all") =>
+    fetch(`${API}/api/cases?tab=${tab}&page=${page}&page_size=${pageSize}&band=${band}`).then((r) => r.json()),
   stats: () => fetch(`${API}/api/stats`).then((r) => r.json()),
   decide: (id, status) =>
     fetch(`${API}/api/cases/${id}/decision`, {
@@ -63,6 +63,14 @@ const TABS = [
   { key: "safe", label: "Safe", icon: XCircle },
 ];
 
+// Sub-tabs under the Queue: filter the open queue by the model's band.
+const QUEUE_BANDS = [
+  { key: "all", label: "All" },
+  { key: "high", label: "High signal", color: T.bands.high.rule },
+  { key: "review", label: "Needs review", color: T.bands.review.rule },
+  { key: "low", label: "Low signal", color: T.bands.low.rule },
+];
+
 function BandChip({ band, small }) {
   const b = T.bands[band] || T.bands.low;
   return (
@@ -89,18 +97,19 @@ function SourceTag({ source, faint }) {
 
 export default function TraceConsole() {
   const [tab, setTab] = useState("queue");
+  const [band, setBand] = useState("all");
   const [page, setPage] = useState(1);
   const [data, setData] = useState(null);      // {items,total,total_pages,page}
-  const [stats, setStats] = useState({ queue: 0, uncertain: 0, escalated: 0, safe: 0 });
+  const [stats, setStats] = useState({ queue: 0, uncertain: 0, escalated: 0, safe: 0, queue_bands: { all: 0, high: 0, review: 0, low: 0 } });
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const load = useCallback(async (t, p) => {
+  const load = useCallback(async (t, p, bnd) => {
     setLoading(true); setError(null);
     try {
-      const [d, s] = await Promise.all([api.cases(t, p), api.stats()]);
+      const [d, s] = await Promise.all([api.cases(t, p, 12, bnd), api.stats()]);
       setData(d); setStats(s);
       setSelectedId((cur) => (d.items.some((i) => i.id === cur) ? cur : d.items[0]?.id ?? null));
     } catch (e) {
@@ -108,13 +117,14 @@ export default function TraceConsole() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(tab, page); }, [tab, page, load]);
+  useEffect(() => { load(tab, page, band); }, [tab, page, band, load]);
 
-  function switchTab(t) { setTab(t); setPage(1); setSelectedId(null); }
+  function switchTab(t) { setTab(t); setBand("all"); setPage(1); setSelectedId(null); }
+  function switchBand(bnd) { setBand(bnd); setPage(1); setSelectedId(null); }
 
   async function act(fn) {
     setBusy(true);
-    try { await fn(); await load(tab, page); }
+    try { await fn(); await load(tab, page, band); }
     finally { setBusy(false); }
   }
 
@@ -163,6 +173,30 @@ export default function TraceConsole() {
             );
           })}
         </div>
+
+        {/* sub-tabs under Queue — filter the open queue by the model's band */}
+        {tab === "queue" && (
+          <div style={{ display: "flex", gap: 6, marginTop: 10, paddingLeft: 2, flexWrap: "wrap" }}>
+            {QUEUE_BANDS.map((sb) => {
+              const active = band === sb.key;
+              const count = stats.queue_bands?.[sb.key] ?? 0;
+              return (
+                <button key={sb.key} className="trace-btn" onClick={() => switchBand(sb.key)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: T.sans,
+                    fontSize: 12, fontWeight: 600, padding: "5px 11px", borderRadius: 20,
+                    border: `1px solid ${active ? (sb.color || T.accent) : T.hair}`,
+                    background: active ? (sb.color ? sb.color + "1A" : T.accentSoft) : "transparent",
+                    color: active ? (sb.color || T.accent) : T.muted,
+                  }}>
+                  {sb.color && <span style={{ width: 6, height: 6, borderRadius: 3, background: sb.color }} />}
+                  {sb.label}
+                  <span style={{ fontFamily: T.mono, fontSize: 11, opacity: 0.85 }}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       {/* body */}
