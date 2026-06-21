@@ -113,7 +113,7 @@ export default function TraceConsole() {
       setData(d); setStats(s);
       setSelectedId((cur) => (d.items.some((i) => i.id === cur) ? cur : d.items[0]?.id ?? null));
     } catch (e) {
-      setError("Can't reach the backend. Is the API running on http://localhost:8000 ?");
+      setError("Can't reach the backend. Is the API running?");
     } finally { setLoading(false); }
   }, []);
 
@@ -148,7 +148,7 @@ export default function TraceConsole() {
           </div>
         </div>
         <p style={{ margin: "12px 0 0", fontSize: 12.5, color: T.faint, display: "flex", alignItems: "center", gap: 7 }}>
-          <Lock size={13} /> Cases are scored by the backend and surfaced for review. The console ranks and explains — it does not act on its own.
+          <Lock size={13} /> The console ranks and explains the cases that are scored by the backend server.
         </p>
 
         {/* tabs */}
@@ -245,8 +245,8 @@ export default function TraceConsole() {
 
       <footer style={{ borderTop: `1px solid ${T.hair}`, background: T.surface, padding: "12px 22px",
         fontSize: 11.5, color: T.faint, display: "flex", gap: 22, flexWrap: "wrap" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Info size={13} /> Synthetic data, served by the backend — depicts tactics, never explicit content.</span>
-        <span><b style={{ color: T.muted, fontWeight: 600 }}>Does not:</b> identify suspects · contact anyone · auto-action · monitor individuals.</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Info size={13} /></span>
+        <span><b style={{ color: T.muted, fontWeight: 600 }}></b></span>
       </footer>
     </div>
   );
@@ -432,7 +432,6 @@ function ActionArea({ c, tab, busy, onDecide, onDiscard }) {
   return (
     <div style={{ background: T.surface, border: `1px solid ${T.hair}`, borderRadius: 10, padding: "16px 18px" }}>
       <div style={{ fontSize: 12.5, color: T.muted, marginBottom: 14, display: "flex", alignItems: "center", gap: 7 }}>
-        <ChevronRight size={15} color={T.accent} /> Your decision. TRACE surfaced this for you — it does not act on its own.
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <ActionBtn primary color={T.bands.high.rule} icon={ArrowUpRight} label="Escalate to investigation"
